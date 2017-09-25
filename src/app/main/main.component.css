@@ -1,0 +1,25 @@
+.map-container {
+    position: relative;
+}
+
+#map {
+    border: 1px solid rgba(0, 0, 0, 0.38);
+    border-radius: 2px;
+    margin-top: 20px;
+    margin-bottom: 30px;
+    padding: 20px;
+    height: 400px;
+    /*width: 100%;*/
+}
+
+.map-btns {
+    margin-top: 20px;
+    /*position: absolute;*/
+    /*top: 30px;*/
+    /*right: 30px;*/
+}
+
+.map-btns .btn {
+    margin-left: 2px;
+    margin-right: 2px;
+}
