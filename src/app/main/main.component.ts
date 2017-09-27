@@ -48,8 +48,14 @@ export class MainComponent implements OnInit, AfterViewInit {
             });
     }
 
-    saveMarkers() {
+    saveMarkers(): void {
         this.mainService.postMarkers(this.markersList);
+    }
+    loadMarkers(): void {
+        this.mainService.getMarkers()
+            .then((data) => {
+
+            });
     }
 
     ngOnInit() {
