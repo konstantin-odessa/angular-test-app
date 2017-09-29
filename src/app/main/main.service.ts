@@ -23,10 +23,8 @@ export class MainService {
     getMarkers(): Promise<any> {
         const url: string = 'http://localhost:3000/all';
         return this.httpService.get(url)
-            .toPromise()
-            .then(this.extractData)
-            .catch(this.handleError);
-
+            .map(this.extractData)
+            .toPromise();
     }
 
     private extractData(res: Response) {

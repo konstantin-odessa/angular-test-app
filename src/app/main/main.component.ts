@@ -10,7 +10,7 @@ declare var DG: any;
 })
 export class MainComponent implements OnInit, AfterViewInit {
     map: any;
-    markersList: any[] = [];
+    markersList: Marker[] = [];
 
     constructor(private mainService: MainService) {
     }
@@ -21,15 +21,22 @@ export class MainComponent implements OnInit, AfterViewInit {
             zoom: 13
         });
     }
+
     initMarkerClickHandler() {
         const _this = this;
         this.map.on('click', function(e){
-            const marker = new DG.marker(e.latlng).addTo(_this.map);
-            _this.markersList.push({id: marker._leaflet_id, coords: marker.getLatLng() });
+            const marker: Marker = new Marker(e._leaflet_id, e.latlng);
+            const leafletMarker = marker.getLeafletMarker();
+            _this.markersList.push(marker);
+            leafletMarker.addTo(_this.map);
+
+            // const marker = new DG.marker(e.latlng).addTo(_this.map);
+            // _this.markersList.push({id: marker._leaflet_id, coords: marker.getLatLng() });
+
             console.log(_this.markersList);
-            marker.once('click', function(markerEvent) {
-                _this.map.removeLayer(marker);
-                _this.markersList = _this.markersList.filter(item => item.id !== marker._leaflet_id);
+            leafletMarker.once('click', function() {
+                _this.map.removeLayer(leafletMarker);
+                _this.markersList = _this.markersList.filter(item => item.id !== leafletMarker._leaflet_id);
                 console.log(_this.markersList);
             });
         });
@@ -52,9 +59,18 @@ export class MainComponent implements OnInit, AfterViewInit {
         this.mainService.postMarkers(this.markersList);
     }
     loadMarkers(): void {
+        const self = this;
         this.mainService.getMarkers()
             .then((data) => {
-
+                this.markersList = data;
+                this.markersList.forEach((marker: Marker) => {
+                    const leafletMarker = marker.getLeafletMarker().addTo(this.map);
+                    leafletMarker.once('click', function() {
+                        self.map.removeLayer(marker);
+                        self.markersList = self.markersList.filter(item => item.id !== leafletMarker._leaflet_id);
+                        console.log(self.markersList);
+                    });
+                });
             });
     }
 
@@ -73,8 +89,22 @@ export class MainComponent implements OnInit, AfterViewInit {
 
 }
 
-export interface LatLng {
+
+export class Marker {
     id: number;
+    latLng: LatLng;
+
+    constructor(id: number, latLng: LatLng) {
+        this.id = id;
+        this.latLng = latLng;
+    }
+
+    getLeafletMarker() {
+        return DG.marker(this.latLng);
+    }
+}
+
+export interface LatLng {
     lat: number;
     lng: number;
 }
