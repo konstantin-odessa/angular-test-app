@@ -18,27 +18,30 @@ export class MainComponent implements OnInit, AfterViewInit {
     initMap(): void {
         this.map = DG.map('map', {
             center: [54.98, 82.89],
-            zoom: 13
+            zoom: 13,
+            worldCopyJump: true,
         });
     }
 
     initMarkerClickHandler() {
         const _this = this;
         this.map.on('click', function(e){
-            const marker: Marker = new Marker(e._leaflet_id, e.latlng);
+            const marker: Marker = new Marker(e.latlng);
             const leafletMarker = marker.getLeafletMarker();
             _this.markersList.push(marker);
             leafletMarker.addTo(_this.map);
 
-            // const marker = new DG.marker(e.latlng).addTo(_this.map);
-            // _this.markersList.push({id: marker._leaflet_id, coords: marker.getLatLng() });
-
             console.log(_this.markersList);
-            leafletMarker.once('click', function() {
-                _this.map.removeLayer(leafletMarker);
-                _this.markersList = _this.markersList.filter(item => item.id !== leafletMarker._leaflet_id);
-                console.log(_this.markersList);
-            });
+            _this.onMarkerRemove(leafletMarker);
+        });
+    }
+    onMarkerRemove(leafletMarker: any) {
+        const self = this;
+        leafletMarker.once('click', function() {
+            self.map.removeLayer(leafletMarker);
+            self.markersList = self.markersList.filter(item => item.latLng !== leafletMarker.getLatLng());
+            // self.markersList = self.markersList.filter(item => item.id !== leafletMarker._leaflet_id);
+            console.log(self.markersList);
         });
     }
     locateUser(): void {
@@ -55,23 +58,40 @@ export class MainComponent implements OnInit, AfterViewInit {
             });
     }
 
+    addMarkerToList(marker: any): void {
+        this.markersList.push(new Marker(marker.getLatLng()));
+    }
+    showMarkersOnMap(markers: Marker[]): void {
+        markers.forEach((marker: Marker) => marker.getLeafletMarker().addTo(this.map));
+    }
+
     saveMarkers(): void {
-        this.mainService.postMarkers(this.markersList);
+        this.mainService.postMarkers(this.markersList)
+            .then(result => {
+                console.log(`markers were successfully saved`);
+                console.log(result);
+            })
+            .catch(this.handleError);
     }
     loadMarkers(): void {
         const self = this;
         this.mainService.getMarkers()
             .then((data) => {
                 this.markersList = data;
-                this.markersList.forEach((marker: Marker) => {
-                    const leafletMarker = marker.getLeafletMarker().addTo(this.map);
-                    leafletMarker.once('click', function() {
-                        self.map.removeLayer(marker);
-                        self.markersList = self.markersList.filter(item => item.id !== leafletMarker._leaflet_id);
-                        console.log(self.markersList);
-                    });
+                this.markersList.forEach((item: any) => {
+                    const marker = new Marker(item.latLng);
+                    const leafletMarker = marker.getLeafletMarker();
+                    leafletMarker.addTo(self.map);
+                    self.onMarkerRemove(leafletMarker);
+                    console.log(`markers were successfully loaded`);
                 });
-            });
+            })
+            .catch(this.handleError);
+    }
+
+    private handleError(error: any): Promise<any> {
+        console.error('An error occurred', error);
+        return Promise.reject(error.message || error);
     }
 
     ngOnInit() {
@@ -94,8 +114,7 @@ export class Marker {
     id: number;
     latLng: LatLng;
 
-    constructor(id: number, latLng: LatLng) {
-        this.id = id;
+    constructor(latLng: LatLng) {
         this.latLng = latLng;
     }
 
