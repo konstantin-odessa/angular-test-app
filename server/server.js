@@ -21,7 +21,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(cors());
 
-app.post('/markers', (req, res) => {
+app.post('/markers', authCheck, (req, res) => {
     db.collection('markers').insertMany(req.body)
         .then(function (result) {
             console.log(result);
